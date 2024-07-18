@@ -3,6 +3,9 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	models "github.com/koshigi/grocery-tracker-backend/db/models"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	"net/http"
 	"os"
 )
@@ -24,6 +27,12 @@ func main() {
 	//Creation of a gin router with default middlewware
 	r := gin.Default()
 
+	DATABASE_URL := os.Getenv("DATABASE_URL")
+	db, err := gorm.Open(postgres.Open(DATABASE_URL), &gorm.Config{})
+	if err != nil {
+		panic("Couldn't connect to database.")
+	}
+
 	//Stone's initial test Get enpoint
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
@@ -41,9 +50,14 @@ func main() {
 	})
 
 	// Retrieving the list and its children
-	r.GET("/getList", func(c *gin.Context) {
+	r.GET("/getList/:id/", func(c *gin.Context) {
+		id := c.Param("id")
+		result := db.First(&models.List{}, id)
+
+		//TODO: fix this error Error #01: json: unsupported type: func() time.Time
+		// unable to marshal the time data type, maybe specify in models?
 		c.JSON(http.StatusOK, gin.H{
-			"message": "get list test",
+			"data": result,
 		})
 	})
 
